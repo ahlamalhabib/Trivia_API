@@ -2,6 +2,7 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy import func
 import random
 
 from models import setup_db, Question, Category
@@ -30,9 +31,10 @@ def create_app(test_config=None):
       return response
 
  
-  #Create an endpoint to handle GET requests for all available categories.
   @app.route('/categories')
   def get_categories():
+      #Create an endpoint to handle GET requests for all available categories.
+
       
       categories = Category.query.all()
       if len(categories) == 0:
@@ -44,18 +46,19 @@ def create_app(test_config=None):
       }), 200
     
 
- #Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). 
   @app.route('/questions')
   def get_all_questions():
-    questions = Question.query.order_by(Question.id).all()
-    total_questions = len(questions)
+     #Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). 
+
+    question = Question.query.order_by(Question.id).all()
+    current_question = paginate_questions(request, question)
     categories = Category.query.order_by(Category.id).all()
 
-    current_question = paginate_questions(request, questions)
+    
     if (len(current_question)) == 0 :
       abort(404)
 
-
+    all_questions = len(question)
     formatted_categories= {}
     for category in categories:
       formatted_categories[category.id] = category.type
@@ -63,30 +66,33 @@ def create_app(test_config=None):
     return jsonify({
       'success': True, 
       'question': current_question,
-      'total_questions': total_questions,
+      'total_questions': all_questions,
       'category': formatted_categories,
       'current_category': None
-    }), 200
+    })
 
 
-  #Create an endpoint to DELETE question using a question ID. 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_question(question_id):
+    #Create an endpoint to DELETE question using a question ID. 
+
     try:
         question = Question.query.get(question_id)
         question.delete()
         return jsonify({
           'success':True,
           'deleted': question_id,
-        }),200
+          'message': ' successfully deleted'
+        })
     except:
       abort(422)
 
 
  
-  #Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score.
   @app.route('/questions', methods=['POST'])
   def create_question():
+    #Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score.
+
     body = request.get_json()
     if not ('question' in body and 'answer' in body and 'difficulty' in body and 'category' in body):
         abort(422)
@@ -103,52 +109,47 @@ def create_app(test_config=None):
 
         return jsonify({
           'success': True,
-          'message': 'Question successfully created!',
+          'message': 'successfully created!',
           'total_questions': len(Question.query.all())
-        }), 201
+        })
 
     except :
        abort(422)
 
 
   
-  #Create a POST endpoint to get questions based on a search term. 
+   
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
+      #Create a POST endpoint to get questions based on a search term.
       body= request.get_json()
       search_term = body.get('searchTerm', '')
       if search_term == '':
             abort(422)
       try:
           questions = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
-
-          if len(questions) == 0:
-                abort(404)
-
-          paginated_questions = paginate_questions(request, questions)
+          
 
           return jsonify({
                 'success': True,
-                'questions': paginated_questions,
+                'questions': paginate_questions(request, questions),
                 'total_questions': len(Question.query.all())
-          }), 200
+          })
 
       except:
            abort(404)
 
  
-  #Create a GET endpoint to get questions based on category. 
+  
   @app.route('/categories/<int:id>/questions')
   def get_questions_by_category(id):
-    category = Category.query.filter_by(id=id).one_or_none()
+    #Create a GET endpoint to get questions based on category.
+    category = Category.query.filter(Category.id == id).one_or_none()
     if (category is None):
          abort(422)
 
-    questions = Question.query.filter_by(category=id).all()
-
-        # paginate questions
-    paginated_questions = paginate_questions(
-            request, questions)
+    questions = Question.query.filter(Question.category == category.id).all()
+    paginated_questions = paginate_questions(request, questions)
 
     return jsonify({
         'success': True,
@@ -159,47 +160,32 @@ def create_app(test_config=None):
 
 
  
-  #Create a POST endpoint to get questions to play the quiz. 
+  
   @app.route('/quizzes', methods=['POST'])
-  def play_quiz_question():
-      #copyright https://github.com/EmmanuelSage/trivia-api
-      # process the request data and get the values
-      data = request.get_json()
-      previous_questions = data.get('previous_questions')
-      quiz_category = data.get('quiz_category')
+  def play_quiz():
+      #Create a POST endpoint to get questions to play the quiz. 
+      body = request.get_json()
 
-      if ((quiz_category is None) or (previous_questions is None)):
-         abort(400)
+      if not ('previous_questions' in body and 'quiz_category' in body):
+        abort(400)
+      previous_questions = body.get('previous_questions')
+      quiz_category = body.get('quiz_category')
 
-        # if default value of category is given return all questions
-        # else return questions filtered by category
       if (quiz_category['id'] == 0):
-         questions = Question.query.all()
+         questions = Question.query.order_by(func.random())
       else:
-         questions = Question.query.filter_by(
-         category=quiz_category['id']).all()
+         questions = Question.query.filter(Question.category == quiz_category['id'])
 
-        # defines a random question generator method
-      def get_random_question():
-          return questions[random.randint(0, len(questions)-1)]
-
-        # get random question for the next question
-      next_question = get_random_question()
-
-        # defines boolean used to check that the question
-        # is not a previous question
-      found = True
-
-      while found:
-          if next_question.id in previous_questions:
-               next_question = get_random_question()
-          else:
-              found = False
+      next_question = questions.filter(Question.id.notin_(previous_questions)).first()
+      if next_question is None:
+        return jsonify({
+          'success': True
+        })
 
       return jsonify({
           'success': True,
           'question': next_question.format()
-      }), 200
+      })
 
   
   #Create error handlers for all expected errors 
@@ -219,7 +205,7 @@ def create_app(test_config=None):
             'message': 'Resource not found'
       }), 404
 
-    @app.errorhandler(422)
+  @app.errorhandler(422)
   def unprocesable_entity(error):
       return jsonify({
             'success': False,

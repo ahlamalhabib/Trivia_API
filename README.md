@@ -303,18 +303,17 @@ curl -X POST -H "Content-Type: application/json" -d '{"previous_questions": [5, 
 ```
 {
   "question": {
-    "answer": "Agra", 
+    "answer": "The Palace of Versailles", 
     "category": 3, 
-    "difficulty": 2, 
-    "id": 15, 
-    "question": "The Taj Mahal is located in which Indian city?"
+    "difficulty": 3, 
+    "id": 14, 
+    "question": "In which royal palace would you find the Hall of Mirrors?"
   }, 
   "success": true
 }
 ```
 
 ## Authros 
-- Udacity provided the starter files for the project including the frontend
 - Ahlam Alhabib worked on  the API.
 ## Acknowledgements 
 The team of Udacity and my helpfull Colleagues.

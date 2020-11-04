@@ -84,7 +84,7 @@ class TriviaTestCase(unittest.TestCase):
         question.insert()
         question_id = question.id
 
-        res = self.client().delete(f'/questions/{question_id}')
+        res = self.client().delete('questions/{}'.format(question_id))
         data = json.loads(res.data)
 
         question = Question.query.filter(
@@ -101,8 +101,8 @@ class TriviaTestCase(unittest.TestCase):
                             difficulty=1, category=1)
         question.insert()
         question_id = question.id
-        self.client().delete(f'/questions/{question_id}')
-        res = self.client().delete(f'/questions/{question_id}')
+        self.client().delete('questions/{}'.format(question_id))
+        res = self.client().delete('questions/{}'.format(question_id))
         data = json.loads(res.data)
         # Assertions
         self.assertEqual(res.status_code, 422)
@@ -111,13 +111,13 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_create_question(self):
         #make request and process
-        new_question = {
+        question = {
             'question': 'new question',
             'answer': 'new answer',
             'difficulty': 1,
             'category': 1
         }
-        res = self.client().post('questions', json=new_question)
+        res = self.client().post('questions', json=question)
         data = json.loads(res.data)
         # Assertions
         self.assertEqual(res.status_code, 201)
@@ -126,14 +126,14 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_error_for_create_question_with_empty_data(self):
         #make request and process
-        request_data = {
+        question= {
             'question': '',
             'answer': '',
             'difficulty': 1,
             'category': '',
         }
 
-        res = self.client().post('questions', json=request_data)
+        res = self.client().post('questions', json=question)
         data = json.loads(res.data)
 
         # Assertions
@@ -154,7 +154,6 @@ class TriviaTestCase(unittest.TestCase):
     def test_error_for_empty_search_term(self):
         #make request and process
         search_question = {'searchTerm': ''}
-
         res = self.client().post('questions/search', json=search_question)
         data = json.loads(res.data)
 
@@ -185,14 +184,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
         self.assertTrue(data['current_category'])
 
-    def test_error_for_get_questions_per_category(self):
-        # make request and process response
-        res = self.client().get('categories/a/questions')
-        data = json.loads(res.data)
-        # Assertions
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(data["success"], False)
-        self.assertEqual(data["message"], "Resource not found")
 
     def test_error_for_invalid_category_id(self):
         # make request and process response
@@ -205,11 +196,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'Unprocessable entity')
 
     def test_play_quiz_questions(self):
-        """Tests playing quiz questions"""
-
-        # mock request data
-        request_data = {
-            'previous_questions': [5, 9],
+        new_quiz = {
+            'previous_questions': [],
             'quiz_category': {
                 'type': 'History',
                 'id': 4
@@ -217,26 +205,18 @@ class TriviaTestCase(unittest.TestCase):
         }
 
         # make request and process response
-        response = self.client().post('/quizzes', json=request_data)
-        data = json.loads(response.data)
+        res = self.client().post('/quizzes', json=new_quiz)
+        data = json.loads(res.data)
 
         # Assertions
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['question'])
 
-        # Ensures previous questions are not returned
-        self.assertNotEqual(data['question']['id'], 5)
-        self.assertNotEqual(data['question']['id'], 9)
-
-        # Ensures returned question is in the correct category
-        self.assertEqual(data['question']['category'], 4)
-
-    def test_no_data_to_play_quiz(self):
-        """Test for the case where no data is sent"""
-
-        # process response from request without sending data
-        response = self.client().post('/quizzes', json={})
+    def test_error_for_play_quiz(self):
+        new_quiz ={}
+        # process response from request
+        response = self.client().post('/quizzes', json=new_quiz)
         data = json.loads(response.data)
 
         # Assertions
