@@ -82,7 +82,7 @@ def create_app(test_config=None):
         return jsonify({
           'success':True,
           'deleted': question_id,
-          'message': ' successfully deleted'
+          'message': 'successfully deleted'
         })
     except:
       abort(422)

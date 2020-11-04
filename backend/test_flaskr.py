@@ -93,6 +93,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertEqual(data['deleted'], question_id)
+        self.assertEqual(data['message'], 'successfully deleted')
         self.assertEqual(question, None)  
 
     def test_error_for_deleting_non_existing_question(self):
@@ -120,9 +121,9 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().post('questions', json=question)
         data = json.loads(res.data)
         # Assertions
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
-        self.assertEqual(data['message'], 'Question successfully created!')
+        self.assertEqual(data['message'], 'successfully created!')
 
     def test_error_for_create_question_with_empty_data(self):
         #make request and process
@@ -162,16 +163,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Unprocessable entity')
 
-    def test_error_for_search_term_not_found(self):
-        # make request and process response
-        search_question = {'searchTerm':'What is your name' }
-        res = self.client().post('questions/search', json=search_question)
-        data = json.loads(res.data)
-
-        # Assertions
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'Resource not found')
 
     def test_get_questions_per_category(self):
         # make request and process response
