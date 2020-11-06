@@ -34,51 +34,49 @@ class TriviaTestCase(unittest.TestCase):
 
     
     def test_get_categories(self):
-        # make request and process response
+
         res = self.client().get('categories')
         data = json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(len(data['categories']))
 
     def test_error_for_requesting_non_existing_category(self):
-        # make request and process response
-        res = self.client().get('categories/9999')
+
+        res = self.client().get('categories/5555')
         data = json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Resource not found')  
 
     def test_get_questions(self):
         
-        # make request and process response
         res = self.client().get('questions')
         data = json.loads(res.data)
 
-        # Assertions
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertTrue(data['category'])
         self.assertTrue(data['total_questions'])
-        self.assertTrue(data['question'])
-        self.assertEqual(len(data['question']), 10)
+        self.assertTrue(data['questions'])
+        self.assertEqual(len(data['questions']), 10)
 
     
     def test_error_for_out_of_bound_page(self):
         
-        # make request and process response
         res = self.client().get('questions?page=10000000')
         data = json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Resource not found')
 
     
     def test_delete_question(self):
-        #make request and process 
+
+
+        #creating a new question to delete it.
         question = Question(question='new question', answer='new answer',
                             difficulty=1, category=1)
         question.insert()
@@ -89,29 +87,30 @@ class TriviaTestCase(unittest.TestCase):
 
         question = Question.query.filter(
             Question.id == question.id).one_or_none()
-        # Assertions
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], question_id)
         self.assertEqual(data['message'], 'successfully deleted')
         self.assertEqual(question, None)  
 
     def test_error_for_deleting_non_existing_question(self):
-        #make request and process 
+
+        #creating a new question to delete it.
         question = Question(question='new question', answer='new answer',
                             difficulty=1, category=1)
         question.insert()
         question_id = question.id
         self.client().delete('questions/{}'.format(question_id))
+        # Deleting a question tow time.
         res = self.client().delete('questions/{}'.format(question_id))
         data = json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'Unprocessable entity')
+        self.assertEqual(data['message'], 'Unprocessable')
 
     def test_create_question(self):
-        #make request and process
+        #create question ..
         question = {
             'question': 'new question',
             'answer': 'new answer',
@@ -120,13 +119,13 @@ class TriviaTestCase(unittest.TestCase):
         }
         res = self.client().post('questions', json=question)
         data = json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
         self.assertEqual(data['message'], 'successfully created!')
 
     def test_error_for_create_question_with_empty_data(self):
-        #make request and process
+        #create question ..
         question= {
             'question': '',
             'answer': '',
@@ -137,38 +136,35 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().post('questions', json=question)
         data = json.loads(res.data)
 
-        # Assertions
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'Unprocessable entity')
+        self.assertEqual(data['message'], 'Unprocessable')
 
     def test_search_questions(self):
-        #make request and process
+
         search_question = {'searchTerm':'Whose autobiography is entitled '}
         res = self.client().post('questions/search', json= search_question)
         data= json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertEqual(len(data['questions']), 1)
 
-    def test_error_for_empty_search_term(self):
-        #make request and process
-        search_question = {'searchTerm': ''}
+    def test_error_for_not_found_search_qustions(self):
+       
+        search_question = {'searchTerm': '4894949484398403092199'}
         res = self.client().post('questions/search', json=search_question)
         data = json.loads(res.data)
 
-        # Assertions
-        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'Unprocessable entity')
+        self.assertEqual(data['message'], 'Resource not found')
 
 
     def test_get_questions_per_category(self):
-        # make request and process response
         res = self.client().get('categories/1/questions')
         data = json.loads(res.data)
-        # Assertions
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(len(data['questions']))
@@ -177,43 +173,34 @@ class TriviaTestCase(unittest.TestCase):
 
 
     def test_error_for_invalid_category_id(self):
-        # make request and process response
         res = self.client().get('/categories/6780/questions')
         data = json.loads(res.data)
 
-        # Assertions
+        
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'Unprocessable entity')
+        self.assertEqual(data['message'], 'Unprocessable')
 
     def test_play_quiz_questions(self):
-        new_quiz = {
-            'previous_questions': [],
-            'quiz_category': {
-                'type': 'History',
-                'id': 4
-            }
-        }
 
-        # make request and process response
-        res = self.client().post('/quizzes', json=new_quiz)
+        quiz = {'previous_questions': [], 'quiz_category': {'type': 'Art','id': 2 }}
+
+        res = self.client().post('/quizzes', json=quiz)
         data = json.loads(res.data)
 
-        # Assertions
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['question'])
 
     def test_error_for_play_quiz(self):
-        new_quiz ={}
-        # process response from request
-        response = self.client().post('/quizzes', json=new_quiz)
+        quiz ={}
+        response = self.client().post('/quizzes', json=quiz)
         data = json.loads(response.data)
 
-        # Assertions
+        
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['message'], 'Bad request error')
+        self.assertEqual(data['message'], 'Bad request')
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

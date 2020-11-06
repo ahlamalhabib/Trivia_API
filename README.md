@@ -1,6 +1,6 @@
 
 
-# Trivia API Project : 
+# Trivia API Project 
 
 Udacity is invested in creating bonding experiences for its employees and students. A bunch of team members got the idea to hold trivia on a regular basis and created a  webpage to manage the trivia app and play the game, but their API experience is limited and still needs to be built out. 
 
@@ -13,7 +13,7 @@ That's where you come in! Help them finish the trivia app so they can start hold
 5) Play the quiz game, randomizing either all questions or within a specific category.
 
 
-## Getting started :
+## Getting started 
 
 pre-requisites and local Development 
 Developers using this project should already have python3, pip and node installed on thier local machines .
@@ -78,13 +78,13 @@ Errors are returned in the following json format:
  {
         "success": "False",
         "error": 422,
-        "message": "Unprocessable entity",
+        "message": "Unprocessable",
       }
 ```
 The API will return Three type of error when requesting fails :
-- 400 – bad request
-- 404 – resource not found
-- 422 – unprocessable
+- 400 – Bad request
+- 404 – Resource not found
+- 422 – Unprocessable
 
 
 
@@ -228,7 +228,7 @@ Deletes a question by id form the url parameter.
 - sample: curl -X DELETE  http://127.0.0.1:5000/questions/9
 ```
 {
-  "deleted": 9, 
+  "message": "successfully deleted", 
   "success": true
 }
 
@@ -240,7 +240,7 @@ Sample:
 curl  -X POST -H "Content-Type: application/json" -d '{ "question": "Which is the only team to play in every soccer World Cup tournament?", "answer": "Brazil", "difficulty": 3, "category": "6" }' http://127.0.0.1:5000/questions 
 
 {
-  "message": "Question successfully created!", 
+  "message": "successfully created!", 
   "success": true, 
   "total_questions": 20
 }
